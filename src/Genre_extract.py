@@ -16,7 +16,7 @@ network = pylast.LastFMNetwork(
 def get_artist_tags(artist_name):
     try:
         artist = network.get_artist(artist_name)
-        tags = artist.get_top_tags(limit=3) 
+        tags = artist.get_top_tags(limit=1) 
         
         if tags:
             tag_names = [tag.item.name for tag in tags]
