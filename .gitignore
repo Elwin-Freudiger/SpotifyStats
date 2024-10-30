@@ -1,7 +1,11 @@
+#ignore annyoing DS_Store
 .DS_Store
 
+#ignore test files
+test/
+
+#ignore dataset
 data/
 
-src/Lastfmapi.py
-
+#portect API data
 /.env

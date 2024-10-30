@@ -1,26 +1,33 @@
 """
-This script changes the Json listening history data and transforms it into a classic dataframe. 
+This script changes the Json listening history data and transforms it into a dataframe. 
 """
+#load packages
+import pandas as pd 
+import glob
 
-import pandas as pd #load package
-#this is the list of json files to extract the history
-file_list = ["data/StreamingHistory_music_0.json", "data/StreamingHistory_music_1.json","data/StreamingHistory_music_2.json"]
 
-streaming_df = pd.DataFrame() #create an empty df
+def main(person):
+    
+    streaming_df = pd.DataFrame() #create an empty df
 
-#loop every file extract the listening history and add it to the df
-for file in file_list:
-    temp_df = pd.read_json(file)
-    streaming_df = pd.concat([streaming_df, temp_df], axis=0, ignore_index=True)
+    #loop every file extract the listening history and add it to the df
+    for file in glob.glob(f"data/StreamingHistory_music_*_{person}.json"):
+        temp_df = pd.read_json(file)
+        streaming_df = pd.concat([streaming_df, temp_df], axis=0, ignore_index=True)
 
-#remove the listening time stamp, group by sum to get the total listening time of every song.
-streaming_df = (streaming_df
-                .drop(columns='endTime')
-                .groupby(by="trackName", as_index=False)
-                .agg(msPlayed=('msPlayed', 'sum'),            
-                     artistName=('artistName', 'first'))
-                )
+    #remove the listening time stamp, group by sum to get the total listening time of every song.
+    streaming_df = (streaming_df
+                    .drop(columns='endTime')
+                    .groupby(by="trackName", as_index=False)
+                    .agg(msPlayed=('msPlayed', 'sum'),            
+                        artistName=('artistName', 'first'))
+                    )
+    
+    stream_hist = streaming_df[streaming_df['msPlayed'] >= 180000]
 
-#streaming_df.to_csv('data/Stream_hist.csv')
+    stream_hist.to_csv(f'data/Stream_hist_{person}.csv')
+
+if __name__ == "__main__":
+    main("arnaud")
 
     
