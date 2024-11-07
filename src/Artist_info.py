@@ -93,16 +93,6 @@ def main(name):
     artist_df = pd.DataFrame(artist_info)
     artist_df.to_csv(f"data/artist_info_{name}.csv", index=False)
 
-def main2():
-    df = pd.read_csv('data/artist_info_oli.csv')
-    df_short = df[df['popularity']==0]
-    df_initial = df[df['popularity']!=0]
-    artist_list = df_short['name']
-    artist_info = asyncio.run(gather_artist_info(artist_list))
-    artist_df = pd.DataFrame(artist_info)
-    updated_df = pd.concat([artist_df, df_initial])
-    updated_df.to_csv('data/artist_info_oli_final.csv')
-
 
 if __name__ == "__main__":
-    main2()
+    main()

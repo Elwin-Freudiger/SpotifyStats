@@ -9,3 +9,9 @@ data/
 
 #portect API data
 /.env
+
+.vscode/
+
+.cache
+
+venv/
