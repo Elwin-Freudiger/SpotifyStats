@@ -9,3 +9,7 @@ data/
 
 #portect API data
 /.env
+
+venv/
+
+.cache
