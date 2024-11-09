@@ -1,3 +1,4 @@
+
 MATCH (listener:Listener {name: 'Ambre'})-[:LISTENS_TO]->(track:Track)-[:PERFORMED_BY]->(artist:Artist)-[:RELATED_TO]->(related:Artist)
 RETURN DISTINCT related.name AS RelatedArtists;
 

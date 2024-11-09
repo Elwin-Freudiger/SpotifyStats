@@ -1,3 +1,5 @@
+// ça fonctionne let's goooooo
+
 // Création des contraintes d'unicité
 CREATE CONSTRAINT FOR (a:Artist) REQUIRE a.name IS UNIQUE;
 CREATE CONSTRAINT FOR (t:Track) REQUIRE t.name IS UNIQUE;
