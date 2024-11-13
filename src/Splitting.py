@@ -7,7 +7,7 @@ original_df = (
     .assign(
        trackPop = lambda df: df['trackPop'].astype('int'),
        artistPop = lambda df: df['artistPop'].astype('int'),
-       releaseDate = lambda df: df['releaseDate'].str[:3].astype('int')
+       releaseDate = lambda df: df['releaseDate'].str[:4].astype('int')
        )
     .drop(columns=["Unnamed: 0.1"])
 
