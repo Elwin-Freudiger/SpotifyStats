@@ -18,15 +18,13 @@ songs_df['trackID'] = "T" + songs_df.index.astype(str)
 
 artists_df = original_df[['artistName', 'artistPop', 'artistGenre', 'artistRelated']].drop_duplicates().reset_index(drop=True)
 
-<<<<<<< Updated upstream
+
 listening_history_df = original_df.merge(
     songs_df[['trackID', 'trackName', 'artistName']],
     how='left',
     on=['trackName', 'artistName']
 )
-=======
-listening_history_df = original_df.merge(songs_df[['trackID', 'trackName', 'artistName']], how='left', on=['trackName', 'artistName'])
->>>>>>> Stashed changes
+
 listening_history_df = listening_history_df[['listener', 'trackID', 'msPlayed']]
 
 songs_df.to_csv("data/clean_data/Tracks.csv", index=False)
