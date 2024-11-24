@@ -1,40 +1,39 @@
 ---
-title: "EDA"
-output: html_document
-date: "2024-11-24"
+title: "Artists"
+output: 
+  html_document:
+    code_folding: hide
 ---
 
-# Artists EDA
-
-```{r, message=FALSE, error=FALSE}
+```{r, message=FALSE, error=FALSE, warning=FALSE}
 library(readr)
 library(kableExtra)
-artists <- read.csv("C:/Users/olivi/OneDrive/Bureau/Github/SpotifyStats/data/clean_data/Artists.csv")
-head(artists) %>%
+data <- read.csv("C:/Users/olivi/OneDrive/Bureau/Github/SpotifyStats/data/clean_data/Artists.csv")
+head(data) %>%
   kbl() %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
                 full_width = FALSE, 
                 font_size = 12)
 ```
 
-## Univariate Analysis
+### Univariate Analysis
 
-### Numerical Variables
+##### Numerical Variables
 
-```{r}
+```{r, message=FALSE, error=FALSE, warning=FALSE}
 # Summary statistics
-summary(artists$artistPop)
+summary(data$artistPop)
 
 # Histogram
-hist(artists$artistPop, main = "Artist Popularity Distribution", xlab = "Popularity", col = "lightblue", border = "white")
+hist(data$artistPop, main = "Artist Popularity Distribution", xlab = "Popularity", col = "lightblue", border = "white")
 
 ```
 
-### Categorical Variables
+##### Categorical Variables
 
-```{r}
+```{r, message=FALSE, error=FALSE, warning=FALSE}
 # Frequency of genres
-genre_counts <- table(artists$artistGenre)
+genre_counts <- table(data$artistGenre)
 
 # Bar plot with 45-degree x-axis labels
 barplot(sort(genre_counts, decreasing = TRUE), 
@@ -49,23 +48,23 @@ mtext(side = 1, text = "Genres", line = 2, cex = 0.7)
 
 ```
 
-## Bivariate Analysis
+### Bivariate Analysis
 
-### Scatter Plot
+##### Scatter Plot
 
-```{r}
-plot(artists$artistPop, jitter(1:nrow(artists)), main = "Artist Popularity Scatter Plot", xlab = "Popularity", ylab = "Artists", col = "darkred")
+```{r, message=FALSE, error=FALSE, warning=FALSE}
+plot(data$artistPop, jitter(1:nrow(data)), main = "Artist Popularity Scatter Plot", xlab = "Popularity", ylab = "Artists", col = "darkred")
 
 ```
 
-### Most Popular Artists
+##### Most Popular Artists
 
-```{r}
+```{r, message=FALSE, error=FALSE, warning=FALSE}
 library(kableExtra)
 library(dplyr)
 
 # Arrange the data by artist popularity in descending order, then alphabetically by artist name
-top_artists <- artists %>%
+top_artists <- data %>%
   arrange(desc(artistPop), artistName) %>%
   head(10)
 
@@ -77,12 +76,12 @@ top_artists %>%
                 font_size = 12)
 ```
 
-```{r}
+```{r, message=FALSE, error=FALSE, warning=FALSE}
 library(ggplot2)
 library(dplyr)
 
 # Get the top 10 artists by popularity, then arrange alphabetically within popularity
-top_artists <- artists %>%
+top_artists <- data %>%
   arrange(desc(artistPop), artistName) %>% # Sort by popularity (descending), then by name (alphabetically)
   head(10)
 
@@ -102,14 +101,14 @@ ggplot(top_artists, aes(x = reorder(artistName, -artistPop), y = artistPop, fill
   )
 ```
 
-## Text Analysis
+### Text Analysis
 
-### Most Common Words in Genres
+##### Most Common Words in Genres
 
-```{r}
+```{r, message=FALSE, error=FALSE, warning=FALSE}
 library(tm)
-artists$artistGenre <- gsub(",", " ", artists$artistGenre)
-genres_corpus <- Corpus(VectorSource(artists$artistGenre))
+data$artistGenre <- gsub(",", " ", data$artistGenre)
+genres_corpus <- Corpus(VectorSource(data$artistGenre))
 genres_dtm <- TermDocumentMatrix(genres_corpus)
 genres_freq <- rowSums(as.matrix(genres_dtm))
 barplot(sort(genres_freq, decreasing = TRUE)[1:10], 
@@ -117,15 +116,6 @@ barplot(sort(genres_freq, decreasing = TRUE)[1:10],
         col = "orange", 
         main = "Top 10 Most Common Words in Genres")
 ```
-
-
-
-
-
-
-
-
-
 
 
 

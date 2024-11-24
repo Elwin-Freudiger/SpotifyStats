@@ -1,0 +1,141 @@
+---
+title: "Tracks"
+output: 
+  html_document:
+    code_folding: hide
+---
+
+```{r, message=FALSE, error=FALSE, warning=FALSE}
+# Load necessary libraries
+library(readr)
+library(kableExtra)
+
+tracks <- read.csv("C:/Users/olivi/OneDrive/Bureau/Github/SpotifyStats/data/clean_data/Tracks.csv", stringsAsFactors = FALSE)
+
+head(tracks) %>%
+  kbl(caption = "First 6 Rows of Tracks Dataset") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = FALSE,
+                font_size = 12)
+```
+
+### Univariate Analysis
+
+##### Check for Missing Values
+
+```{r, message=FALSE, error=FALSE, warning=FALSE}
+# Count missing values per column
+missing_values <- sapply(data, function(x) sum(is.na(x)))
+
+# Display missing values
+data.frame(Column = names(missing_values), Missing = missing_values) %>%
+  kbl(caption = "Missing Values per Column") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = FALSE,
+                font_size = 12)
+```
+
+##### Distribution of Numerical Variables
+
+```{r, message=FALSE, error=FALSE, warning=FALSE}
+library(ggplot2)
+
+ggplot(tracks, aes(x = releaseDate)) +
+  geom_bar(fill = "steelblue", color = "white") +
+  labs(
+    title = "Distribution of Tracks by Release Year",
+    x = "Release Year",
+    y = "Number of Tracks"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+```{r, message=FALSE, error=FALSE, warning=FALSE}
+library(ggplot2)
+
+# Histogram of track popularity
+ggplot(tracks, aes(x = trackPop)) +
+  geom_histogram(binwidth = 5, fill = "steelblue", color = "white") +
+  labs(
+    title = "Distribution of Track Popularity",
+    x = "Track Popularity",
+    y = "Frequency"
+  ) +
+  theme_minimal()
+
+```
+
+### Bivariate Analysis
+
+##### Counts and Histogram
+
+```{r, message=FALSE, error=FALSE, warning=FALSE}
+library(dplyr)
+library(kableExtra)
+
+# Count the number of unique trackName and AlbumName for each artistName
+tracks_by_artist <- tracks %>%
+  group_by(artistName) %>%
+  summarise(
+    track_count = n_distinct(trackName),  # Count unique tracks
+    album_count = n_distinct(albumName)  # Count unique albums
+  ) %>%
+  arrange(desc(track_count))
+
+# Display the top 10 artists by track and album count with kableExtra
+tracks_by_artist %>%
+  head(10) %>% # Display the top 10 artists
+  kbl(caption = "Top 10 Artists by Unique Tracks and Albums") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = FALSE,
+                font_size = 12)
+
+
+```
+
+
+```{r, message=FALSE, error=FALSE, warning=FALSE}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+# Reshape the data to long format for plotting
+top_10_artists_long <- tracks_by_artist %>%
+  head(10) %>%
+  pivot_longer(
+    cols = c(track_count, album_count),
+    names_to = "Category",
+    values_to = "Count"
+  ) %>%
+  mutate(Category = factor(Category, levels = c("track_count", "album_count"))) # Set order: Tracks first, Albums second
+
+# Plot the data with separate columns for tracks and albums
+ggplot(top_10_artists_long, aes(x = reorder(artistName, -Count), y = Count, fill = Category)) +
+  geom_bar(stat = "identity", position = "dodge", width = 0.7) +
+  labs(
+    title = "Top 10 Artists by Unique Tracks and Albums",
+    x = "Artist Name",
+    y = "Count",
+    fill = "Category"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), # Rotate x-axis labels
+    plot.title = element_text(hjust = 0.5)            # Center-align the title
+  ) +
+  scale_fill_manual(
+    values = c("track_count" = "steelblue", "album_count" = "orange"),
+    labels = c("Tracks", "Albums") # Rename labels for better legend readability
+  )
+```
+
+
+
+
+
+
+
+
+

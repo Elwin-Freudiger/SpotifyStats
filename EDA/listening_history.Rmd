@@ -1,0 +1,141 @@
+---
+title: "Listening History"
+output: 
+  html_document:
+    code_folding: hide
+---
+
+```{r, message=FALSE, error=FALSE, warning=FALSE}
+library(readr)        # For reading the CSV file
+library(kableExtra)   # For table styling
+
+# Load the dataset
+data <- read.csv("C:/Users/olivi/OneDrive/Bureau/Github/SpotifyStats/data/clean_data/Listening_History.csv", stringsAsFactors = FALSE)
+
+# Display the first 6 rows (head) with kableExtra
+head(data) %>%
+  kbl(caption = "Listening History Head") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = FALSE,
+                font_size = 12)
+```
+
+### Univariate Analysis
+
+##### Most Played Tracks
+
+```{r, message=FALSE, error=FALSE, warning=FALSE}
+library(dplyr)
+library(kableExtra)
+
+# Top 10 most played tracks
+top_tracks <- data %>%
+  group_by(trackID) %>%
+  summarise(total_msPlayed = sum(msPlayed)) %>%
+  arrange(desc(total_msPlayed)) %>%
+  head(10)
+
+# Display the top 10 tracks with kableExtra styling
+top_tracks %>%
+  kbl(caption = "Top 10 Most Played Tracks") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = FALSE,
+                font_size = 12)
+
+```
+
+##### Plot the Most Played Tracks
+
+```{r, message=FALSE, error=FALSE, warning=FALSE}
+library(ggplot2)
+
+ggplot(top_tracks, aes(x = reorder(trackID, -total_msPlayed), y = total_msPlayed)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = "Top 10 Most Played Tracks", x = "Track ID", y = "Total ms Played") +
+  theme_minimal()
+```
+
+### Listerner Analysis
+
+##### Top Listeners
+
+```{r, message=FALSE, error=FALSE, warning=FALSE}
+library(dplyr)
+library(kableExtra)
+
+# Calculate top listeners with additional time columns, removing decimal points
+top_listeners <- data %>%
+  group_by(listener) %>%
+  summarise(total_msPlayed = sum(msPlayed)) %>%
+  mutate(
+    total_minutes = floor(total_msPlayed / (1000 * 60)),  # Convert ms to minutes, remove decimals
+    total_hours = floor(total_msPlayed / (1000 * 60 * 60)),  # Convert ms to hours, remove decimals
+    total_days = floor(total_msPlayed / (1000 * 60 * 60 * 24))  # Convert ms to days, remove decimals
+  ) %>%
+  arrange(desc(total_msPlayed)) %>%
+  head(10)
+
+# Display the top listeners with kableExtra styling
+top_listeners %>%
+  kbl(caption = "Top Listeners by Listening Time") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = FALSE,
+                font_size = 12)
+```
+
+```{r, message=FALSE, error=FALSE, warning=FALSE}
+library(ggplot2)
+
+# Plot top listeners and their total listening time in hours
+ggplot(top_listeners, aes(x = reorder(listener, -total_hours), y = total_hours, fill = listener)) +
+  geom_bar(stat = "identity") +
+  labs(
+    title = "Top Listeners by Listening Time",
+    x = "Listener",
+    y = "Total Listening Time (Hours)"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",       # Remove legend
+    axis.text.x = element_text(angle = 45, hjust = 1), # Tilt x-axis labels
+    plot.title = element_text(hjust = 0.5) # Center-align title
+  ) +
+  scale_fill_brewer(palette = "Set3") # Optional: Add a color palette
+```
+
+### Distribution of Listening Time
+
+```{r, message=FALSE, error=FALSE, warning=FALSE}
+ggplot(data, aes(x = msPlayed)) +
+  geom_histogram(binwidth = 50000, fill = "lightblue", color = "black") +
+  labs(title = "Distribution of Listening Time", x = "Milliseconds Played", y = "Frequency") +
+  theme_minimal()
+
+```
+
+### Relationship Between Tracks and Listeners
+
+```{r, message=FALSE, error=FALSE, warning=FALSE}
+library(dplyr)
+library(kableExtra)
+
+# Calculate track popularity based on unique listeners
+track_popularity <- data %>%
+  group_by(trackID) %>%
+  summarise(unique_listeners = n_distinct(listener)) %>%
+  arrange(desc(unique_listeners)) %>%
+  head(10)
+
+# Display the track popularity table with kableExtra styling
+track_popularity %>%
+  kbl(caption = "Top 10 Tracks by Unique Listeners") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = FALSE,
+                font_size = 12)
+
+```
+
+
+
+
+
