@@ -1,0 +1,133 @@
+---
+title: "EDA"
+output: html_document
+date: "2024-11-24"
+---
+
+# Artists EDA
+
+```{r, message=FALSE, error=FALSE}
+library(readr)
+library(kableExtra)
+artists <- read.csv("C:/Users/olivi/OneDrive/Bureau/Github/SpotifyStats/data/clean_data/Artists.csv")
+head(artists) %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
+                full_width = FALSE, 
+                font_size = 12)
+```
+
+## Univariate Analysis
+
+### Numerical Variables
+
+```{r}
+# Summary statistics
+summary(artists$artistPop)
+
+# Histogram
+hist(artists$artistPop, main = "Artist Popularity Distribution", xlab = "Popularity", col = "lightblue", border = "white")
+
+```
+
+### Categorical Variables
+
+```{r}
+# Frequency of genres
+genre_counts <- table(artists$artistGenre)
+
+# Bar plot with 45-degree x-axis labels
+barplot(sort(genre_counts, decreasing = TRUE), 
+        las = 2, # Rotates the axis labels
+        col = "lightgreen", 
+        main = "Most Common Genres",
+        cex.names = 0.7) # Reduces the size of labels
+
+# Adjust x-axis text angle to 45 degrees using par()
+par(las = 2)  # This is for vertical axis text
+mtext(side = 1, text = "Genres", line = 2, cex = 0.7)
+
+```
+
+## Bivariate Analysis
+
+### Scatter Plot
+
+```{r}
+plot(artists$artistPop, jitter(1:nrow(artists)), main = "Artist Popularity Scatter Plot", xlab = "Popularity", ylab = "Artists", col = "darkred")
+
+```
+
+### Most Popular Artists
+
+```{r}
+library(kableExtra)
+library(dplyr)
+
+# Arrange the data by artist popularity in descending order, then alphabetically by artist name
+top_artists <- artists %>%
+  arrange(desc(artistPop), artistName) %>%
+  head(10)
+
+# Display the top 10 artists with kableExtra styling
+top_artists %>%
+  kbl(caption = "Top 10 Artists by Popularity") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = FALSE,
+                font_size = 12)
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+# Get the top 10 artists by popularity, then arrange alphabetically within popularity
+top_artists <- artists %>%
+  arrange(desc(artistPop), artistName) %>% # Sort by popularity (descending), then by name (alphabetically)
+  head(10)
+
+# Create a vertical bar plot
+ggplot(top_artists, aes(x = reorder(artistName, -artistPop), y = artistPop, fill = artistName)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(
+    title = "Top 10 Artists by Popularity",
+    x = "Artist Name",
+    y = "Popularity"
+  ) +
+  theme(
+    legend.position = "none", # Remove legend
+    axis.text.x = element_text(angle = 45, hjust = 1), # Tilt x-axis labels for readability
+    plot.title = element_text(hjust = 0.5)
+  )
+```
+
+## Text Analysis
+
+### Most Common Words in Genres
+
+```{r}
+library(tm)
+artists$artistGenre <- gsub(",", " ", artists$artistGenre)
+genres_corpus <- Corpus(VectorSource(artists$artistGenre))
+genres_dtm <- TermDocumentMatrix(genres_corpus)
+genres_freq <- rowSums(as.matrix(genres_dtm))
+barplot(sort(genres_freq, decreasing = TRUE)[1:10], 
+        las = 2, 
+        col = "orange", 
+        main = "Top 10 Most Common Words in Genres")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
