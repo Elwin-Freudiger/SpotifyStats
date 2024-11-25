@@ -163,7 +163,7 @@ barplot(sort(genres_freq, decreasing = TRUE)[1:10],
         col = "lightblue", 
         main = "Top 10 Most Common Words in Genres",
         xlab = "Genres",         # Add x-axis label
-        ylab = "Count of Genres" # Add y-axis label
+        ylab = "Frequency" # Add y-axis label
 )
 ```
 
