@@ -25,9 +25,6 @@ head(data) %>%
 ##### Most Played Tracks
 
 ```{r, message=FALSE, error=FALSE, warning=FALSE}
-library(dplyr)
-library(kableExtra)
-
 # Top 10 most played tracks
 top_tracks <- data %>%
   group_by(trackID) %>%
@@ -92,7 +89,7 @@ ggplot(top_listeners, aes(x = reorder(listener, -total_hours), y = total_hours, 
   labs(
     title = "Top Listeners by Listening Time",
     x = "Listener",
-    y = "Total Listening Time (Hours)"
+    y = "Total Listening Time"
   ) +
   theme_minimal() +
   theme(
