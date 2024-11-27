@@ -5,11 +5,9 @@
 test/
 
 #ignore dataset
-data/raw_json/
-data/hist/
-data/artist/
-data/track/
-
+data/
+!data/clean_data
+!data/timeserie/
 #portect API data
 /.env
 

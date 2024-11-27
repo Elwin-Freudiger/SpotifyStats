@@ -13,11 +13,12 @@ original_df = (
 
 )
 
-songs_df = original_df[['trackName', 'artistName', 'albumName', 'releaseDate', 'trackPop']].drop_duplicates().reset_index(drop=True)
+songs_df = original_df[
+    ['trackName', 'artistName', 'albumName', 'releaseDate', 'trackPop']
+].drop_duplicates(subset=['trackName', 'artistName']).reset_index(drop=True)
 songs_df['trackID'] = "T" + songs_df.index.astype(str)
 
-artists_df = original_df[['artistName', 'artistPop', 'artistGenre', 'artistRelated']].drop_duplicates().reset_index(drop=True)
-
+artists_df = original_df[['artistName', 'artistPop', 'artistGenre', 'artistRelated']].drop_duplicates(subset=['artistName']).reset_index(drop=True)
 
 listening_history_df = original_df.merge(
     songs_df[['trackID', 'trackName', 'artistName']],
