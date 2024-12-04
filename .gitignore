@@ -7,7 +7,11 @@ test/
 #ignore dataset
 data/
 !data/clean_data
+<<<<<<< Updated upstream
 !data/timeserie/
+=======
+!data/timeserie
+>>>>>>> Stashed changes
 #portect API data
 /.env
 

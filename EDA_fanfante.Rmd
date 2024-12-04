@@ -1,0 +1,328 @@
+---
+title: "EDA"
+output: 
+  html_document:
+    code_folding: hide
+---
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(kableExtra)
+library(lubridate)
+library(ggcorrplot)
+```
+
+```{r}
+spotify <- read.csv(("data/clean_data/spotify_info.csv")) %>%
+  select(-"Unnamed..0", -"X") %>%
+  mutate(
+    broadGenre = case_when(
+      grepl("hip hop", artistGenre, ignore.case = TRUE) ~ "Hip-Hop",
+      grepl("indie", artistGenre, ignore.case = TRUE) ~ "Indie",
+      grepl("rap", artistGenre, ignore.case = TRUE) ~ "Rap",
+      grepl("electro|edm", artistGenre, ignore.case = TRUE) ~ "Electronic",
+      grepl("r&b", artistGenre, ignore.case = TRUE) ~ "R&B",
+      grepl("country", artistGenre, ignore.case = TRUE) ~ "Country",
+      grepl("jazz", artistGenre, ignore.case = TRUE) ~ "Jazz",
+      grepl("pop", artistGenre, ignore.case = TRUE) ~ "Pop",
+      grepl("rock", artistGenre, ignore.case = TRUE) ~ "Rock",
+      grepl("classical", artistGenre, ignore.case = TRUE) ~ "Classical",
+      grepl("lo-fi", artistGenre, ignore.case = TRUE) ~ "Lo-Fi",
+      TRUE ~ "Other"  # Default category for unmatched genres
+    ),
+    releaseDate = as.Date(releaseDate, format = "%Y"),
+    listener = as.factor(listener)
+  ) %>%
+  slice_sample(n = nrow(.))  # Shuffle rows randomly
+```
+
+## Artists EDA
+
+```{r}
+unique_artists <- spotify %>%
+  distinct(artistName, .keep_all = TRUE)
+summary(unique_artists$artistPop)
+
+# Create a histogram for artist popularity
+ggplot(unique_artists, aes(x = artistPop)) +
+  geom_histogram(bins = 100, fill = "lightblue", color = "white") +
+  ggtitle("Histogram of Artist Popularity") +
+  xlab("Artist Popularity") +
+  ylab("Frequency") +
+  theme_minimal()
+
+```
+
+```{r}
+# Get the top 20 artists with the highest popularity
+top_5_artists <- unique_artists %>%
+  arrange(desc(artistPop)) %>% select(artistName, artistPop) %>% head(5)
+
+# Display the top 10 artists
+top_5_artists %>%
+  kbl(caption = "Top 5 Artists by Popularity") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = TRUE,
+                font_size = 10)
+
+# Get the top 20 artists with the smallest popularity
+bottom_5_artists <- unique_artists %>%
+  arrange(artistPop) %>% select(artistName, artistPop) %>% head(5)
+
+# Display the top 10 artists
+bottom_5_artists %>%
+  kbl(caption = "Top 5 Artists with the smallest Popularity") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = TRUE,
+                font_size = 10)
+```
+
+## Genre EDA
+
+```{r}
+# Define a mapping for genres
+broad_genres <- unique_artists %>%
+  count(broadGenre, sort = TRUE)
+
+# Display the results
+broad_genres %>%
+  kbl(caption = "Count Genres") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = TRUE,
+                font_size = 10)
+
+broad_genres_with_artists <- unique_artists %>%
+  group_by(broadGenre) %>%
+  summarise(
+    count = n(),  # Count the number of occurrences for each genre
+    example_artists = paste(head(artistName, 3), collapse = ", "),  # Take the first 3 artists and concatenate them
+    .groups = "drop"
+  ) %>%
+  arrange(desc(count))  # Sort by count in descending order
+
+# Display the table with genres and example artists
+broad_genres_with_artists %>%
+  kbl(caption = "Count Genres with Example Artists") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = TRUE,
+                font_size = 10)
+```
+
+## Listening EDA
+
+```{r}
+top_tracks <- spotify %>%
+  group_by(trackName) %>%
+  summarise(total_msPlayed = sum(msPlayed)) %>%
+  mutate(
+    total_minutes = floor(total_msPlayed / (1000 * 60)),
+    total_hours = floor(total_msPlayed / (1000 * 60 * 60))
+    ) %>%
+  arrange(desc(total_msPlayed)) %>%
+  head(10)
+
+# Display the top 10 tracks with kableExtra styling
+top_tracks %>%
+  kbl(caption = "Top 10 Most Played Tracks") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = FALSE,
+                font_size = 12)
+```
+
+```{r}
+top_listeners <- spotify %>%
+  group_by(listener) %>%
+  summarise(total_msPlayed = sum(msPlayed)) %>%
+  mutate(
+    total_minutes = floor(total_msPlayed / (1000 * 60)),  # Convert ms to minutes, remove decimals
+    total_hours = floor(total_msPlayed / (1000 * 60 * 60)),  # Convert ms to hours, remove decimals
+    total_days = floor(total_msPlayed / (1000 * 60 * 60 * 24))  # Convert ms to days, remove decimals
+  ) %>%
+  arrange(desc(total_msPlayed)) %>%
+  head(10)
+
+# Display the top listeners with kableExtra styling
+top_listeners %>%
+  kbl(caption = "Top Listeners by Listening Time") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = FALSE,
+                font_size = 12)
+```
+
+```{r}
+# Group by trackName and artistName, then sum msPlayed
+unique_tracks <- spotify %>%
+  group_by(trackName, artistName) %>%  # Group by unique track and artist
+  summarize(msPlayed = sum(msPlayed, na.rm = TRUE), .groups = 'drop') 
+```
+
+```{r}
+# Calculate track popularity based on unique listeners
+track_popularity <- spotify %>%
+  group_by(trackName, artistName) %>%  # Group by both trackName and artistName
+  summarise(unique_listeners = n_distinct(listener), .groups = "drop") %>%  # Count unique listeners per track-artist pair
+  arrange(desc(unique_listeners)) %>%  # Arrange by descending unique listeners
+  head(10)  # Keep only the top 10 tracks
+
+# Display the track popularity table with kableExtra styling
+track_popularity %>%
+  kbl(caption = "Top 10 Tracks by Unique Listeners") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = FALSE,
+                font_size = 12)
+```
+
+## Tracks EDA
+
+```{r}
+# Extract the year from releaseDate and count tracks per year
+tracks_per_year <- spotify %>%
+  mutate(releaseYear = as.numeric(substr(releaseDate, 1, 4))) %>%  # Extract year from releaseDate
+  group_by(releaseYear) %>%  # Group by release year
+  summarise(num_tracks = n(), .groups = "drop")
+
+ggplot(tracks_per_year, aes(x = releaseYear, y = num_tracks)) +
+  geom_bar(stat = "identity", fill = "lightblue", color = "white") +  # Bar graph with solid fill and outline
+  ggtitle("Number of Tracks Released Per Year") +
+  xlab("Release Year") +
+  ylab("Number of Tracks") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+pop_tracks <- spotify %>%
+  group_by(trackPop) %>%
+  summarise(tracks = n(), .groups = "drop")
+
+ggplot(pop_tracks, aes(x = trackPop, y = tracks)) +
+  geom_bar(stat = "identity", fill = "lightblue", color = "white") +  # Bar graph with solid fill and outline
+  ggtitle("Distribution of track popularity") +
+  xlab("Track Popularity") +
+  ylab("Number of Tracks") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+summary(pop_tracks$trackPop)
+```
+
+```{r}
+# Scatter plot of track popularity vs artist popularity
+ggplot(spotify, aes(x = artistPop, y = trackPop)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  ggtitle("Track Popularity vs Artist Popularity") +
+  xlab("Artist Popularity") +
+  ylab("Track Popularity") +
+  theme_minimal()
+```
+
+```{r}
+# Summarize total msPlayed by artistGenre
+msPlayed_by_genre <- spotify %>%
+  group_by(broadGenre) %>%
+  summarise(total_msPlayed = sum(msPlayed, na.rm = TRUE)) %>%
+   mutate(total_hours = floor(total_msPlayed / (1000 * 60 * 60))) %>%
+  arrange(desc(total_msPlayed))
+
+# Bar plot for top genres by listening time
+ggplot(msPlayed_by_genre, aes(x = reorder(broadGenre, total_msPlayed), y = total_hours)) +
+  geom_bar(stat = "identity", fill = "lightblue") +
+  ggtitle("Broad genres by Total Listening Time") +
+  xlab("Genre") +
+  ylab("Total Listening Time (hours)") +
+  theme_minimal() +
+  coord_flip()  # Flip coordinates for better readability
+```
+
+```{r}
+# Count unique listeners by genre
+listeners_by_genre <- spotify %>%
+  group_by(broadGenre) %>%
+  summarise(unique_listeners = n_distinct(listener)) %>%
+  arrange(desc(unique_listeners))
+
+# Bar plot for unique listeners by genre
+ggplot(listeners_by_genre, aes(x = reorder(broadGenre, unique_listeners), y = unique_listeners)) +
+  geom_bar(stat = "identity", fill = "lightblue") +
+  ggtitle("Genres by Unique Listeners") +
+  xlab("Genre") +
+  ylab("Number of Unique Listeners") +
+  theme_minimal() +
+  coord_flip()
+```
+
+```{r}
+cumulative_msplayed <- spotify %>%
+  arrange(listener, releaseDate) %>%  # Arrange by listener and release date
+  group_by(listener) %>%  # Group by listener
+  mutate(cumulative_msPlayed = cumsum(msPlayed)) %>%  # Calculate cumulative sum of msPlayed
+  ungroup()  # Remove grouping for easier plotting
+
+# Plot cumulative msPlayed for each listener (example for a few listeners)
+ggplot(cumulative_msplayed %>% filter(listener %in% c("Ambre", "Fanny", "Arnaud", "Olivier", "Elwin")), 
+       aes(x = releaseDate, y = cumulative_msPlayed, color = listener)) +
+  geom_line() +
+  ggtitle("Cumulative msPlayed Over Time by Listener") +
+  xlab("Date") +
+  ylab("Cumulative msPlayed") +
+  theme_minimal()
+```
+
+```{r}
+# Scatter plot of track popularity vs listening time
+ggplot(spotify, aes(x = msPlayed, y = trackPop)) +
+  geom_point(alpha = 0.5, color = "purple") +
+  geom_smooth(method = "lm", color = "red", se = TRUE) +
+  ggtitle("Track Popularity vs Listening Time") +
+  xlab("Listening Time (msPlayed)") +
+  ylab("Track Popularity") +
+  theme_minimal()
+```
+
+```{r}
+
+
+# Select numeric columns and calculate correlation matrix
+numeric_cols <- spotify %>% select_if(is.numeric)
+cor_matrix <- cor(numeric_cols, use = "complete.obs")
+
+# Plot correlation matrix
+ggcorrplot(cor_matrix, method = "circle", lab = TRUE, title = "Correlation Matrix")
+```
+
+```{r}
+listener_ratio <- spotify %>%
+  group_by(listener) %>%
+  summarise(
+    total_tracks = n(),  # Total tracks listened
+    unique_artists = n_distinct(artistName),  # Unique artists
+    ratio = total_tracks / unique_artists,  # Ratio of tracks to artists
+    .groups = "drop"
+  ) %>%
+  arrange(desc(ratio))  # Sort by ratio in descending order
+
+# View the result
+print(listener_ratio)
+```
+
+```{r}
+top_artist_per_listener <- spotify %>%
+  group_by(listener, artistName) %>%
+  summarise(
+    total_msPlayed = sum(msPlayed, na.rm = TRUE),  # Total msPlayed per artist per listener
+    total_tracks = n_distinct(trackName),  # Number of distinct tracks by this artist
+    .groups = "drop"
+  ) %>%
+  arrange(listener, desc(total_msPlayed)) %>%  # Sort by listener and descending msPlayed
+  group_by(listener) %>%
+  slice_head(n = 1) %>%  # Select the top artist for each listener
+  ungroup() %>%
+  mutate(
+    total_hours = total_msPlayed / (1000 * 60 * 60),  # Convert msPlayed to hours
+    multiple_tracks = ifelse(total_tracks > 1, TRUE, FALSE)  # Check if more than one track
+  )
+
+# View the result
+print(top_artist_per_listener)
+```
