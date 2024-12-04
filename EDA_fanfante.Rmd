@@ -45,12 +45,21 @@ unique_artists <- spotify %>%
 summary(unique_artists$artistPop)
 
 # Create a histogram for artist popularity
+png("artist_popularity_histogram.png", width = 1000, height = 750)
 ggplot(unique_artists, aes(x = artistPop)) +
-  geom_histogram(bins = 100, fill = "lightblue", color = "white") +
-  ggtitle("Histogram of Artist Popularity") +
-  xlab("Artist Popularity") +
+  geom_histogram(bins = 100, fill = "#1DB954", color = "white") +
+  xlab("Artist Popularity (0 to 100)") +
   ylab("Frequency") +
-  theme_minimal()
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold")
+    )
+dev.off()
+```
+
+```{r}
+summary_output <- capture.output(summary(unique_artists$artistPop))
+writeLines(summary_output, "summary_artist_popularity.txt")
 
 ```
 
@@ -182,13 +191,17 @@ tracks_per_year <- spotify %>%
   group_by(releaseYear) %>%  # Group by release year
   summarise(num_tracks = n(), .groups = "drop")
 
+png("tracks_per_year.png", width = 1000, height = 750)
 ggplot(tracks_per_year, aes(x = releaseYear, y = num_tracks)) +
-  geom_bar(stat = "identity", fill = "lightblue", color = "white") +  # Bar graph with solid fill and outline
-  ggtitle("Number of Tracks Released Per Year") +
+  geom_bar(stat = "identity", fill = "#1DB954", color = "white") +
+  ggtitle("Tracks Released Over Time") +
   xlab("Release Year") +
   ylab("Number of Tracks") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+    )
+dev.off()
 ```
 
 ```{r}
@@ -196,29 +209,77 @@ pop_tracks <- spotify %>%
   group_by(trackPop) %>%
   summarise(tracks = n(), .groups = "drop")
 
+png("track_popularity.png", width = 1000, height = 750)
 ggplot(pop_tracks, aes(x = trackPop, y = tracks)) +
-  geom_bar(stat = "identity", fill = "lightblue", color = "white") +  # Bar graph with solid fill and outline
+  geom_bar(stat = "identity", fill = "#1DB954", color = "white") +  # Bar graph with solid fill and outline
   ggtitle("Distribution of track popularity") +
   xlab("Track Popularity") +
   ylab("Number of Tracks") +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold")
+    )
 summary(pop_tracks$trackPop)
+dev.off()
 ```
 
 ```{r}
 # Scatter plot of track popularity vs artist popularity
+correlation <- cor(spotify$artistPop, spotify$trackPop)
+model <- lm(trackPop ~ artistPop, data = spotify)  # Linear regression model
+slope <- coef(model)[2]  # Extract the slope
+
+png("popularities.png", width = 1500, height = 750)
 ggplot(spotify, aes(x = artistPop, y = trackPop)) +
-  geom_point(alpha = 0.6) +
-  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  geom_point(alpha = 1, size = 1) +
+  geom_smooth(method = "lm", color = "#1DB954", se = FALSE) +
   ggtitle("Track Popularity vs Artist Popularity") +
   xlab("Artist Popularity") +
   ylab("Track Popularity") +
-  theme_minimal()
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold")
+    ) +
+  annotate("text", x = 20, y = 90, label = paste0("Correlation: ", round(correlation, 2)), size = 10, color = "black") +  # Add correlation
+  annotate("text", x = 20, y = 85, label = paste0("Slope: ", round(slope, 2)), size = 10, color = "black")  # Add slope
+dev.off()
+```
+
+```{r}
+# Scatter plot of track popularity vs artist popularity with enhancements
+ggplot(spotify, aes(x = artistPop, y = trackPop)) +
+  geom_point(alpha = 0.4, size = 1, color = "#4682B4") +  # Transparent blue points
+  geom_smooth(method = "lm", color = "#FF4500", se = TRUE, linetype = "dashed", size = 1) + # Dashed regression line
+  ggtitle("Relationship Between Track and Artist Popularity") +  # Clear and descriptive title
+  xlab("Artist Popularity (0 to 100)") +  # Refined x-axis label
+  ylab("Track Popularity (0 to 100)") +  # Refined y-axis label
+  theme_light() +  # Light theme for clarity
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),  # Center and bold title
+    axis.title = element_text(size = 14),  # Larger axis titles
+    axis.text = element_text(size = 12),  # Larger axis text
+    panel.grid.major = element_line(color = "gray", linetype = "dotted")  # Subtle gridlines
+  )
+
 ```
 
 ```{r}
 # Summarize total msPlayed by artistGenre
+
+data <- msPlayed_by_genre %>%
+  mutate(broadGenre = factor(broadGenre, levels = c(
+    "Classical", "R&B", "Jazz", "Lo-Fi", "Electronic", 
+    "Rap", "Rock", "Country", "Hip-Hop", "Indie", "Pop", "Other"
+  )))
+
+# Define custom colors for the genres
+genre_colors <- c(
+  "Pop" = "#1DB954", "Indie" = "#1DB954", "Hip-Hop" = "#1DB954", 
+  "Country" = "#1DB954", "Rock" = "#1DB954", "Rap" = "#1DB954", 
+  "Electronic" = "#1DB954", "Lo-Fi" = "#1DB954", "Jazz" = "#1DB954", 
+  "R&B" = "#1DB954", "Classical" = "#1DB954", "Other" = "gray"
+)
+
 msPlayed_by_genre <- spotify %>%
   group_by(broadGenre) %>%
   summarise(total_msPlayed = sum(msPlayed, na.rm = TRUE)) %>%
@@ -226,13 +287,53 @@ msPlayed_by_genre <- spotify %>%
   arrange(desc(total_msPlayed))
 
 # Bar plot for top genres by listening time
+#
 ggplot(msPlayed_by_genre, aes(x = reorder(broadGenre, total_msPlayed), y = total_hours)) +
-  geom_bar(stat = "identity", fill = "lightblue") +
+  geom_bar(stat = "identity", fill = "#1DB954") +
   ggtitle("Broad genres by Total Listening Time") +
   xlab("Genre") +
   ylab("Total Listening Time (hours)") +
   theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold")
+    ) +
   coord_flip()  # Flip coordinates for better readability
+
+```
+
+```{r}
+# Reorder the 'broadGenre' factor to place 'Other' at the bottom
+msPlayed_by_genre <- msPlayed_by_genre %>%
+  mutate(broadGenre = factor(broadGenre, levels = c(
+    "Classical", "R&B", "Jazz", "Lo-Fi", "Electronic", 
+    "Rap", "Rock", "Country", "Hip-Hop", "Indie", "Pop", "Other"
+  )))
+
+# Define custom colors for the genres
+genre_colors <- c(
+  "Pop" = "#1DB954", "Indie" = "#1DB954", "Hip-Hop" = "#1DB954", 
+  "Country" = "#1DB954", "Rock" = "#1DB954", "Rap" = "#1DB954", 
+  "Electronic" = "#1DB954", "Lo-Fi" = "#1DB954", "Jazz" = "#1DB954", 
+  "R&B" = "#1DB954", "Classical" = "#1DB954", "Other" = "gray"
+)
+
+# Create the updated bar plot
+png("genres_total.png", width = 1000, height = 750)
+ggplot(msPlayed_by_genre, aes(x = reorder(broadGenre, total_msPlayed), y = total_hours, fill = broadGenre)) + 
+  geom_bar(stat = "identity") + 
+  scale_fill_manual(values = genre_colors) + # Apply custom colors
+  ggtitle("Broad Genres by Total Listening Time") + 
+  xlab("Genre") + 
+  ylab("Total Listening Time (hours)") + 
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    legend.position = "none" # Remove legend for simplicity
+  ) +
+  coord_flip() # Flip coordinates for better readability
+dev.off()
 ```
 
 ```{r}
@@ -253,6 +354,7 @@ ggplot(listeners_by_genre, aes(x = reorder(broadGenre, unique_listeners), y = un
 ```
 
 ```{r}
+#nul
 cumulative_msplayed <- spotify %>%
   arrange(listener, releaseDate) %>%  # Arrange by listener and release date
   group_by(listener) %>%  # Group by listener
@@ -289,6 +391,35 @@ cor_matrix <- cor(numeric_cols, use = "complete.obs")
 
 # Plot correlation matrix
 ggcorrplot(cor_matrix, method = "circle", lab = TRUE, title = "Correlation Matrix")
+```
+
+```{r}
+# Install and load necessary packages
+library(ggcorrplot)
+
+numeric_cols <- spotify %>% select_if(is.numeric)
+cor_matrix <- cor(numeric_cols, use = "complete.obs")
+
+# Create a pretty correlation matrix
+ggcorrplot(cor_matrix, 
+           method = "circle",       # Use circles to visualize correlation
+           type = "lower",          # Show only lower triangle
+           lab = TRUE,              # Add correlation coefficients
+           lab_size = 4,            # Size of labels
+           colors = c("#1DB954", "white", "black"),  # Gradient colors
+           title = "Correlation Matrix", 
+           legend.title = "Correlation") + 
+  theme_minimal()  # Clean theme
+
+library(corrplot)
+corrplot(cor_matrix, 
+         method = "color",       # Use colored tiles
+         type = "lower",         # Show only the lower triangle
+         tl.col = "black",       # Text label color
+         tl.srt = 45,            # Rotate text labels
+         col = colorRampPalette(c("#6D9EC1", "white", "#1DB954"))(200),  # Gradient colors
+         title = "Correlation Matrix",
+         addCoef.col = "black")  # Add coefficients in black
 ```
 
 ```{r}
