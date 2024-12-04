@@ -8,6 +8,8 @@ test/
 data/*
 
 !data/clean_data
+!data/timeserie
+
 #portect API data
 /.env
 
