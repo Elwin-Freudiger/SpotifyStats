@@ -37,7 +37,6 @@ ts_long %>%
   ggplot(aes(x=day,y=cumsum/3.6e+6, color=listener)) +
   geom_line() +
   theme_minimal()+
-  labs(title="Evolution of the listening history",
-       x="Date",
+  labs(x="Date",
        y="Listening time (hours)") +
   ylim(c(0,760))
